@@ -13,6 +13,7 @@ import os
 from transformers import AutoTokenizer
 from bs4 import BeautifulSoup
 
+
 class WikiGather:
     SECTIONS_TO_IGNORE = [
         "See also",
@@ -40,34 +41,30 @@ class WikiGather:
         "Template talk:",
         "Help:",
         "Category:",
-        "Portal:"
+        "Portal:",
     ]
 
     def __init__(self, args):
         self.relevant_pages = []
-        
+
         self.tokenizer = AutoTokenizer.from_pretrained(args.tokenizer_llm)
         self.wiki_chunks = []
-        
+
         self.page_record = self._load_page_record("wiki_page_record.json")
 
-        self.site = mwclient.Site(
-            host='en.wikipedia.org',
-            scheme='https',
-            path='/w/'
-        )
+        self.site = mwclient.Site(host="en.wikipedia.org", scheme="https", path="/w/")
 
         self.max_tokens = 1000
 
     def count_tokens(self, text: str) -> int:
-        
-        tokens = self.tokenizer.tokenize(text)        
+
+        tokens = self.tokenizer.tokenize(text)
         return len(tokens)
 
     def _save_page_record(self, file_name, input_list):
 
         data_to_save = [{"title": item.lower()} for item in input_list]
-        
+
         with open(file_name, "w", encoding="utf-8") as file:
             json.dump(data_to_save, file, ensure_ascii=False, indent=4)
 
@@ -89,17 +86,17 @@ class WikiGather:
             if i in title:
                 return False
         return True
-    
+
     def get_wiki_page(self, title: str):
 
         page = self.site.pages[title]
-        
+
         if not page.exists:
             return None, False
-        
+
         if self._is_disambiguation(page):
             return page, True
-        
+
         return page, False
 
     def _is_disambiguation(self, page: mwclient.page.Page) -> bool:
@@ -118,16 +115,16 @@ class WikiGather:
         if not initial_page:
             print(f"No valid page found for '{title}'.")
             return []
-        
+
         if is_disambig:
             print(f"'{title}' is a disambiguation page.")
             return [initial_page]
-        
+
         linked_pages = self._find_all_pages(initial_page.links(), depth=depth)
 
         total_pages = [initial_page] + linked_pages
         return total_pages
-    
+
     def _find_all_pages(self, link_pages, depth=1):
 
         pages = []
@@ -144,7 +141,7 @@ class WikiGather:
             if title_lower in titles_seen:
                 continue
             titles_seen.add(title_lower)
-            
+
             if title_lower in self.page_record:
                 continue
 
@@ -152,7 +149,7 @@ class WikiGather:
             if page:
                 print(f"Gathering: {title_str}")
                 pages.append(page)
-                
+
                 if not is_disambig and depth > 1:
                     sub_links = page.links()  # yields more Page objects
                     sub_pages = self._find_all_pages(sub_links, depth=depth - 1)
@@ -187,7 +184,9 @@ class WikiGather:
             child_sections = section.get_sections(levels=[my_level + 1])
             for subsection in child_sections:
                 results.extend(
-                    self.all_subsections_from_section(subsection, titles, sections_to_ignore)
+                    self.all_subsections_from_section(
+                        subsection, titles, sections_to_ignore
+                    )
                 )
             return results
 
@@ -215,7 +214,9 @@ class WikiGather:
         top_sections = parsed_text.get_sections(levels=[2])
         for subsection in top_sections:
             results.extend(
-                self.all_subsections_from_section(subsection, [title], sections_to_ignore)
+                self.all_subsections_from_section(
+                    subsection, [title], sections_to_ignore
+                )
             )
         return results
 
@@ -275,8 +276,10 @@ class WikiGather:
 
         if len(encoded_ids) > self.max_tokens:
             if print_warning:
-                print(f"Warning: Truncated string from {len(encoded_ids)} to {self.max_tokens} tokens.")
-            encoded_ids = encoded_ids[:self.max_tokens]
+                print(
+                    f"Warning: Truncated string from {len(encoded_ids)} to {self.max_tokens} tokens."
+                )
+            encoded_ids = encoded_ids[: self.max_tokens]
 
         truncated_text = self.tokenizer.decode(encoded_ids, skip_special_tokens=True)
         return truncated_text
@@ -318,7 +321,6 @@ class WikiGather:
             # If we couldn't split on any delimiter, fallback to truncation
             return [self.truncated_string(combined)]
 
-
     def gather(self, title: str):
 
         self.relevant_pages = self.find_related_pages(title)
@@ -337,7 +339,7 @@ class WikiGather:
             for s in kept:
                 splitted_chunks = self.split_strings_from_subsection(s)
                 self.wiki_chunks.extend(splitted_chunks)
-        
+
         self.wiki_chunks = list(set(self.wiki_chunks))
 
         return "Wiki context gathered"

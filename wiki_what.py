@@ -13,6 +13,7 @@ from utils import Spinner, load_config
 
 args = load_config()
 
+
 def main():
     print("Welcome to WikiWhat!")
     exit_program = False
@@ -23,7 +24,9 @@ def main():
     memory = QdrantMemory(args)
     bot = SLMChatbot(args)
 
-    print(f"\nUsing Qdrant for context and {args.preferred_llm} for answering questions.\n")
+    print(
+        f"\nUsing Qdrant for context and {args.preferred_llm} for answering questions.\n"
+    )
 
     while not exit_program:
         title = input(
@@ -58,7 +61,9 @@ def main():
                 break
 
             if command == "switch model":
-                new_model = input("Enter the new model name (copied from HuggingFace or quantized\\ folder): ")
+                new_model = input(
+                    "Enter the new model name (copied from HuggingFace or quantized\\ folder): "
+                )
                 bot.switch_model(new_model)
 
             if command == "help":
@@ -82,10 +87,9 @@ def main():
                 for c in context_chunks:
                     sum = bot.summarize_context(c)
                     chunks.append(sum)
-            
+
             else:
                 chunks = context_chunks.copy()
-            
 
             # Generate the answer using the SLMChatbot
             spinner.start()

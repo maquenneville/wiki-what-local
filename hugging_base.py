@@ -8,14 +8,9 @@ from transformers import (
     AutoTokenizer,
     AutoModelForCausalLM,
     QuantoConfig,
-    CompileConfig
+    CompileConfig,
 )
-from optimum.quanto import (
-    QuantizedModelForCausalLM,
-    qint2,
-    qint4,
-    qint8
-)
+from optimum.quanto import QuantizedModelForCausalLM, qint2, qint4, qint8
 
 
 class SLMChatbot:
@@ -39,7 +34,7 @@ class SLMChatbot:
 
         if self.do_summarize:
             self._load_summarization_pipeline()
-        
+
         self._load_generation_model()
 
     def _load_summarization_pipeline(self):
@@ -48,7 +43,7 @@ class SLMChatbot:
             "summarization",
             model=self.model_sum,
             torch_dtype=torch.bfloat16,
-            device_map="auto"
+            device_map="auto",
         )
         print(f"Loaded summarization pipeline with model: {self.model_sum}")
 
@@ -82,7 +77,9 @@ class SLMChatbot:
         else:
             print(f"Quantizing model '{self.model_name}' to {bits}-bit...")
             model = AutoModelForCausalLM.from_pretrained(self.model_name)
-            qmodel = QuantizedModelForCausalLM.quantize(model, weights=bits_map[bits], exclude="lm_head")
+            qmodel = QuantizedModelForCausalLM.quantize(
+                model, weights=bits_map[bits], exclude="lm_head"
+            )
 
             os.makedirs(self.quantize_dir, exist_ok=True)
             qmodel.save_pretrained(self.quantize_dir)
@@ -108,7 +105,6 @@ class SLMChatbot:
         except Exception as e:
             print(f"Failed to update config.ini with new quantized model: {e}")
 
-
     def count_tokens(self, text: str) -> int:
 
         return len(self.tokenizer.tokenize(text))
@@ -128,7 +124,9 @@ class SLMChatbot:
     def get_gen_response(self, prompt: str) -> str:
 
         if not hasattr(self, "gen_model"):
-            raise AttributeError("Generation model not loaded. Use task='text-generation' or load it manually.")
+            raise AttributeError(
+                "Generation model not loaded. Use task='text-generation' or load it manually."
+            )
 
         inputs = self.tokenizer(prompt, return_tensors="pt")
         compile_config = CompileConfig(dynamic=True)
@@ -152,7 +150,9 @@ class SLMChatbot:
     def get_summary_response(self, prompt: str) -> str:
 
         if not hasattr(self, "summary_pipeline"):
-            raise AttributeError("Summarization pipeline not loaded. Use task='summarization'.")
+            raise AttributeError(
+                "Summarization pipeline not loaded. Use task='summarization'."
+            )
         results = self.summary_pipeline(prompt, do_sample=True, top_p=0.95)
         return results[0]["summary_text"]
 
@@ -172,7 +172,9 @@ class SLMChatbot:
         )
 
         if self.count_tokens(prompt) > 2056:
-            raise ValueError("Input too long; reduce the context length or question size.")
+            raise ValueError(
+                "Input too long; reduce the context length or question size."
+            )
 
         response = self.get_gen_response(prompt)
 

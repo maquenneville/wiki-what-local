@@ -1,0 +1,7 @@
+torch
+transformers
+optimum
+qdrant-client
+mwclient
+mwparserfromhell
+beautifulsoup4
