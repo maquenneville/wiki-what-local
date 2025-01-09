@@ -25,7 +25,8 @@ class QdrantMemory:
             self.client = QdrantClient(":memory:")
 
         self.client.set_model(
-            embedding_model_name="BAAI/bge-base-en", threads=self.num_threads
+            embedding_model_name="BAAI/bge-base-en",
+            threads=self.num_threads
         )
 
         self._create_collection()
@@ -57,9 +58,7 @@ class QdrantMemory:
             cpu_cores = multiprocessing.cpu_count()
             vector_params = fastembed_params
 
-            print(
-                f"Creating collection '{self.collection_name}' with {cpu_cores} segments."
-            )
+            print(f"Creating collection '{self.collection_name}' with {cpu_cores} segments.")
             self.client.create_collection(
                 collection_name=self.collection_name,
                 vectors_config=vector_params,
@@ -84,7 +83,7 @@ class QdrantMemory:
             documents=[document],
             metadata=[metadata] if metadata else None,
             ids=[doc_id] if doc_id else None,
-            parallel=self.num_threads,
+            parallel=self.num_threads
         )
         print(f"Stored document with ID: {doc_id or 'auto-generated'}")
 
@@ -95,7 +94,7 @@ class QdrantMemory:
             documents=documents,
             metadata=metadatas,
             ids=ids,
-            parallel=self.num_threads,
+            parallel=self.num_threads
         )
         print(f"Stored {len(documents)} documents in '{self.collection_name}'.")
 

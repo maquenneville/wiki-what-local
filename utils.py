@@ -4,28 +4,26 @@ import sys
 import time
 import os
 
-
 def load_config():
-
+    
     # Check if config file exists
     if not os.path.exists("config.ini"):
         raise FileNotFoundError("The config file 'config.ini' was not found.")
-
+    
     class Args:
         """Class to hold configuration arguments."""
-
         pass
 
     config = configparser.ConfigParser()
-    config.read("config.ini")
+    config.read('config.ini')
 
     args = Args()
 
     for section in config.sections():
         for key, value in config.items(section):
             # Check for boolean strings and convert them
-            if value.lower() in ["true", "false"]:
-                setattr(args, key.lower(), value.lower() == "true")
+            if value.lower() in ['true', 'false']:
+                setattr(args, key.lower(), value.lower() == 'true')
             else:
                 setattr(args, key.lower(), value)
 
@@ -62,3 +60,4 @@ class Spinner:
         # Clear the spinner line
         sys.stdout.write("\r" + " " * (len(self._message) + 2))
         sys.stdout.flush()
+        

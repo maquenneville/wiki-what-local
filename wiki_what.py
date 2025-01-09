@@ -7,7 +7,7 @@ Created on Tue Aug  8 23:26:03 2023
 
 from qdrant_memory import QdrantMemory
 from wiki_gather import WikiGather
-from hugging_base import SLMChatbot
+from llama_cpp_bot import LlamaCPPChatbot
 from utils import Spinner, load_config
 
 
@@ -22,11 +22,10 @@ def main():
     # Initialize WikiGather, QdrantMemory, and SLMChatbot
     wiki_gather = WikiGather(args)
     memory = QdrantMemory(args)
-    bot = SLMChatbot(args)
+    bot = LlamaCPPChatbot(args)
 
-    print(
-        f"\nUsing Qdrant for context and {args.preferred_llm} for answering questions.\n"
-    )
+
+    print(f"\nUsing Qdrant for context and {args.preferred_llm} for answering questions.\n")
 
     while not exit_program:
         title = input(
@@ -61,17 +60,15 @@ def main():
                 break
 
             if command == "switch model":
-                new_model = input(
-                    "Enter the new model name (copied from HuggingFace or quantized\\ folder): "
-                )
+                new_model = input("Enter the new model name (copied from HuggingFace or quantized\\ folder): ")
                 bot.switch_model(new_model)
+
 
             if command == "help":
                 print(
                     """
                     Commands:
                         switch topic: takes you back to enter a new Wikipedia page
-                        switch model: use a new model for QA inference, must be path from huggingface or from local 'quantized' folder
                         exit: quit program
                     """
                 )
@@ -79,22 +76,11 @@ def main():
 
             # Fetch context from Chroma and add it to the SLMChatbot
             context_chunks = memory.fetch_context(command)
-
-            if args.summarize_context:
-
-                chunks = []
-
-                for c in context_chunks:
-                    sum = bot.summarize_context(c)
-                    chunks.append(sum)
-
-            else:
-                chunks = context_chunks.copy()
-
+            
             # Generate the answer using the SLMChatbot
             spinner.start()
             try:
-                answer = bot.chat(command, context_chunks=chunks)
+                answer = bot.chat(command, context_chunks=context_chunks)
             except Exception as e:
                 answer = f"An error occurred: {e}"
             spinner.stop()
